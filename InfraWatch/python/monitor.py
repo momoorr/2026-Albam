@@ -1,16 +1,17 @@
 import subprocess
 import time
 
-
+# 모니터링 할 서버 정보
 servers = {
     "POS 서버": "127.0.0.1",
     "DB 서버": "127.0.0.1",
     "재고 서버": "192.0.2.1"
 }
 
+# 이전 서버 상태를 저장
 previous_status = {}
 
-
+# 서버가 네트워크상 살아있는지 확인(ping 이용)
 def check_server(ip):
     result = subprocess.run(
         ["ping", "-n", "1", "-w", "1000", ip],
