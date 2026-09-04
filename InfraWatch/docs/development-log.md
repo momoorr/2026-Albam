@@ -100,3 +100,89 @@ elif not previous_status[name] and current_status:
 * 5초 주기 상태 확인
 * 장애 발생 감지
 * 장애 복구 감지
+
+
+---
+
+### 2026-09-04
+
+#### 1. Ping을 이용한 서버 상태 확인
+
+Python의 subprocess를 이용하여 서버의 IP 주소에 Ping을 보내
+서버의 네트워크 연결 상태를 확인하도록 구현했다.
+
+```python
+def check_server(ip):
+    result = subprocess.run(
+        ["ping", "-n", "1", "-w", "1000", ip],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+
+    return result.returncode == 0
+```
+Ping 응답이 있으면 정상, 응답이 없으면 장애로 판단한다.
+
+#### 2. 여러 서버 모니터링
+
+무인매장의 주요 인프라를 가정하여 다음 서버를 구성했다.
+
+* POS 서버
+* DB 서버
+* 재고 서버
+
+각 서버의 IP 주소를 관리하고 반복적으로 상태를 확인하도록 구현했다.
+
+#### 3. 주기적인 모니터링
+while True와 time.sleep(5)를 이용하여
+5초마다 서버 상태를 확인하도록 변경했다.
+
+#### 4. 장애 발생 및 복구 감지
+이전 상태를 previous_status에 저장하여
+정상 → 장애 또는 장애 → 정상으로 상태가 변경되는 순간을 감지하도록 구현했다.
+
+```python
+if previous_status[name] and not current_status:
+    print("장애 발생")
+
+elif not previous_status[name] and current_status:
+    print("복구 완료")
+```
+
+#### 5. 시스템 자원 모니터링
+psutil 라이브러리를 이용하여 현재 시스템의
+
+* CPU
+* Memory
+* Disk
+
+사용률을 확인하도록 추가했다.
+
+#### 6. 서비스 포트 상태 확인
+Ping만으로는 서버가 살아있는지 여부만 확인할 수 있기 때문에
+실제 서비스가 정상적으로 동작하는지 확인하기 위해 TCP 포트 검사를 추가했다.
+
+```python
+check_port(ip, port)
+```
+
+예를 들어 POS 서버의 경우:
+* 서버 Ping 정상
+* 8000번 포트 정상
+
+이어야 POS 서비스가 정상이라고 판단할 수 있다.
+
+#### 테스트 결과
+Python HTTP 서버를 8000번 포트에서 실행한 결과:
+```
+POS 서버 (127.0.0.1) → 🟢 정상
+포트 8000 → 정상
+```
+
+HTTP 서버를 종료하면:
+```
+POS 서버 (127.0.0.1) → 🟢 정상
+포트 8000 → 장애
+```
+서버 자체는 살아있지만 서비스가 중단된 상황을 구분할 수 있음을 확인했다.
+
