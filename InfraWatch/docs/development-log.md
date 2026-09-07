@@ -239,6 +239,9 @@ Docker Container 재시작
 서비스 복구
 ```
 
+
+---
+
 ### 2026-09-07
 
 #### 1. psutil 디스크 사용량 오류 수정
@@ -252,6 +255,41 @@ Windows 환경에서 `psutil.disk_usage()` 실행 시
 - CPU → psutil
 - Memory → psutil
 - Disk → shutil
+
+#### 2. Docker 기반 POS 서버 구축 및 자동복구 준비
+
+기존 Python 모니터링 시스템에서 감시하던 POS 서비스를 Docker 컨테이너로 구성하고,
+향후 장애 발생 시 Python Monitor가 Docker 컨테이너를 자동으로 재시작하도록 구현한다.
+
+#### 작업 내용
+
+#### 1) Docker 환경 확인
+- Windows 환경에서 Docker Desktop 설치
+- WSL 2 사용 환경 확인
+- `wsl --status` 명령으로 WSL 2 정상 동작 확인
+- Docker 기본 배포판이 `docker-desktop`으로 설정된 것을 확인
+
+#### 2) POS Docker 이미지 생성
+프로젝트 경로:
+
+`C:\Users\nthca\OneDrive\바탕 화면\Albam`
+
+Docker POS 서버 경로:
+
+`Albam/docker/pos`
+
+Dockerfile 작성:
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+EXPOSE 8000
+
+CMD ["python", "-m", "http.server", "8000"]
+```
+
 
 
 #### 2. 
