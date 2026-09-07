@@ -51,16 +51,16 @@ def check_port(ip, port):
 
     return result == 0
 
-# 장애가 발생한 서비스를 자동으로 다시 실행
+# 장애가 발생한 Docker 서비스를 자동으로 다시 실행
 def auto_recover(name, port):
     if name == "POS 서버" and port == 8000:
-        print("🔧 POS 서비스 자동 복구를 시도합니다.")
+        print("🔧 POS Docker 서비스 자동 복구를 시도합니다.")
 
-        subprocess.Popen(
-            ["python", "-m", "http.server", "8000"]
+        subprocess.run(
+            ["docker", "restart", "pos-server"]
         )
 
-        print("🔄 POS 서비스 재시작 명령을 실행했습니다.")
+        print("🔄 POS Docker 컨테이너 재시작 명령을 실행했습니다.")
 
 # 현재 시스템의 CPU, 메모리, 디스크 사용률 확인
 def get_system_status():
