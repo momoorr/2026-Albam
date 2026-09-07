@@ -239,3 +239,19 @@ Docker Container 재시작
 서비스 복구
 ```
 
+### 2026-09-07
+
+#### 1. psutil 디스크 사용량 오류 수정
+
+Windows 환경에서 `psutil.disk_usage()` 실행 시
+`SystemError: argument 1 (impossible<bad format char>)` 오류가 발생했다.
+
+디스크 사용량 확인 기능을 Python 기본 라이브러리인 `shutil.disk_usage()`를
+사용하는 방식으로 변경하여 해결했다.
+
+- CPU → psutil
+- Memory → psutil
+- Disk → shutil
+
+
+#### 2. 
