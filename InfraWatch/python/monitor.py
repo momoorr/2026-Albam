@@ -2,6 +2,7 @@ import subprocess
 import time
 import psutil
 import socket
+import shutil
 
 
 # 모니터링할 서버 목록
@@ -65,7 +66,9 @@ def auto_recover(name, port):
 def get_system_status():
     cpu = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory().percent
-    disk = psutil.disk_usage("C:\\").percent
+
+    total, used, free = shutil.disk_usage("C:\\")
+    disk = (used / total) * 100
 
     return cpu, memory, disk
 
