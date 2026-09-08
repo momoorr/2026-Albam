@@ -290,4 +290,72 @@ EXPOSE 8000
 CMD ["python", "-m", "http.server", "8000"]
 ```
 
- 
+### 2026-09-08
+
+#### 3) POS Docker 컨테이너 실행
+
+Docker 이미지를 기반으로 POS 컨테이너를 생성하고 실행하였다.
+
+```powershell
+docker run -d --name pos-server -p 8000:8000 infrawatch-pos
+```
+실행 후 docker ps 명령을 통해 POS 컨테이너가 정상적으로 실행 중인 것을 확인하였다.
+
+```powershell
+infrawatch-pos   pos-server   Up
+0.0.0.0:8000->8000/tcp
+```
+
+#### 4) Python Monitor와 Docker 자동복구 연동
+
+기존 Python HTTP 서버를 직접 실행하는 방식에서
+Docker 컨테이너를 재시작하는 방식으로 자동복구 로직을 변경하였다.
+
+```python
+subprocess.Popen(
+    ["python", "-m", "http.server", "8000"]
+)
+```
+
+변경 방식:
+```python
+subprocess.Popen(
+    ["python", "-m", "http.server", "8000"]
+)
+```
+이를 통해 POS 서비스 장애 발생 시
+Python Monitor가 Docker 컨테이너를 자동으로 재시작하도록 구성하였다.
+
+5) Docker 자동복구 테스트
+
+POS Docker 컨테이너를 의도적으로 중지하여 장애 상황을 재현하였다.
+
+```powershell
+docker stop pos-server
+```
+Python Monitor에서 POS의 8000번 포트 장애를 감지하고
+자동복구 명령을 실행하는 것을 확인하였다.
+```
+🚨 [서비스 장애] POS 서버의 포트 8000에 장애가 발생했습니다.
+🔧 POS Docker 서비스 자동 복구를 시도합니다.
+🔄 POS Docker 컨테이너 재시작 명령을 실행했습니다.
+```
+
+이후 다음 모니터링 주기에서 POS 서비스가 정상적으로 복구된 것을 확인하였다.
+
+```
+포트 8000 → 🟢 정상
+✅ [서비스 복구] POS 서버의 포트 8000가 정상적으로 복구되었습니다.
+```
+
+**테스트 결과**
+```text
+POS Docker 컨테이너 정상 실행 확인
+Python Monitor를 통한 서비스 장애 감지 성공
+Docker 컨테이너 자동 재시작 성공
+장애 발생 후 서비스 정상 복구 확인
+```
+
+이를 통해 Python 기반 인프라 모니터링 시스템과
+Docker 기반 서비스 자동복구 기능을 연동하였다.
+
