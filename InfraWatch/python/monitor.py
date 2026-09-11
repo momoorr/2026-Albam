@@ -3,6 +3,9 @@ import time
 import psutil
 import socket
 import shutil
+import json
+from datetime import datetime
+
 
 
 # 모니터링할 서버 목록
@@ -72,6 +75,76 @@ def get_system_status():
 
     return cpu, memory, disk
 
+# 현재 모니터링 상태를 JSON 파일로 저장
+def save_status(cpu, memory, disk, server_status):
+    status = {
+        "system": {
+            "cpu": cpu,
+            "memory": memory,
+            "disk": disk
+        },
+        "servers": server_status
+    }
+
+    with open("status.json", "w", encoding="utf-8") as file:
+        json.dump(status, file, ensure_ascii=False, indent=4)
+
+# 서버 상태 정보를 저장
+server_status = {}
+
+# 장애 발생 및 복구 이력을 JSON 파일에 저장
+def save_incident(name, ip, port, failure_type, status):
+    incident = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "server": name,
+        "ip": ip,
+        "port": port,
+        "failure_type": failure_type,
+        "status": status
+    }
+
+    try:
+        with open("incidents.json", "r", encoding="utf-8") as file:
+            incidents = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        incidents = []
+
+    incidents.append(incident)
+
+    with open("incidents.json", "w", encoding="utf-8") as file:
+        json.dump(
+            incidents,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+# 장애 발생 및 복구 이력을 JSON 파일에 저장
+def save_incident(name, ip, port, failure_type, status):
+    incident = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "server": name,
+        "ip": ip,
+        "port": port,
+        "failure_type": failure_type,
+        "status": status
+    }
+
+    try:
+        with open("incidents.json", "r", encoding="utf-8") as file:
+            incidents = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        incidents = []
+
+    incidents.append(incident)
+
+    with open("incidents.json", "w", encoding="utf-8") as file:
+        json.dump(
+            incidents,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
 
 # 5초마다 인프라 상태 확인
 while True:
@@ -102,7 +175,6 @@ while True:
         else:
             print(f"{name} ({ip}) → 🔴 장애")
 
-
         # 서버 상태 변화 확인
 
         # 처음 확인하는 서버
@@ -122,7 +194,7 @@ while True:
         previous_status[name] = current_status
 
 
-        # 서비스 포트 상태 확인
+        # 포트 상태 확인 
         port_status = check_port(ip, port)
 
         if port_status:
@@ -130,6 +202,14 @@ while True:
         else:
             print(f"포트 {port} → 🔴 장애")
 
+
+        # 현재 서버 상태를 저장
+        server_status[name] = {
+            "ip": ip,
+            "port": port,
+            "server_status": current_status,
+            "port_status": port_status
+        }           
 
         # 포트 상태 변화 확인
 
@@ -144,6 +224,14 @@ while True:
                 f"{name}의 포트 {port}에 장애가 발생했습니다."
             )
 
+            save_incident(
+                name,
+                ip,
+                port,
+                "서비스 포트 장애",
+                "장애 발생"
+                )
+
             # 자동복구 호출
             auto_recover(name, port)
 
@@ -153,11 +241,19 @@ while True:
                 f"✅ [서비스 복구] "
                 f"{name}의 포트 {port}가 정상적으로 복구되었습니다."
             )
-
+        
+            save_incident(
+                name,
+                ip,
+                port,
+                "서비스 포트 장애",
+                "복구 완료"
+            )
 
         # 현재 포트 상태 저장
         previous_port_status[name] = port_status
 
+    save_status(cpu, memory, disk, server_status)
 
     print("===============================")
 
